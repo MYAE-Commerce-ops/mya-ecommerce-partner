@@ -2,8 +2,8 @@
    MYA E-Commerce Partner — Supabase Auth + CRUD
    Fill in your Supabase project details below before use.
    ========================================================= */
-const SUPABASE_URL = "YOUR_SUPABASE_URL";        // e.g. https://xxxxxxxx.supabase.co
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"; // Project Settings → API → anon public key
+const SUPABASE_URL = "https://whqamwwfyaoqhpudavyb.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_Pze6i6PtPJH56Nd27SVETg_7m74bAPC";
 
 if (SUPABASE_URL.includes("YOUR_SUPABASE_URL") || SUPABASE_ANON_KEY.includes("YOUR_SUPABASE_ANON_KEY")) {
   document.addEventListener("DOMContentLoaded", () => {
