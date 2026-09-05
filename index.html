@@ -3,75 +3,246 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MYA E-Commerce Partner</title>
+<title>MYA E-Commerce Partner | HR Dashboard</title>
+<link rel="icon" href="assets/logo.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+
+<!-- ============ LOGIN PAGE ============ -->
 <div id="loginPage" class="login-wrap">
-  <div class="login-card">
-    <div class="logo">MYA</div>
-    <h1>MYA E-Commerce Partner</h1>
-    <p>Private Worker Management System</p>
-    <form id="loginForm">
-      <input id="username" placeholder="Owner username" required>
-      <input id="password" type="password" placeholder="Password" required>
-      <button>Login as Owner</button>
-    </form>
-    <small>Demo login: owner / mya123</small>
+  <div class="login-shell">
+    <div class="login-brand">
+      <img class="brand-logo" src="assets/logo.jpeg" alt="MYA E-Commerce">
+      <h1>MYA E-Commerce Partner</h1>
+      <p>Employee & Task Management Portal</p>
+      <div class="login-features">
+        <span>✓ Workforce Management</span><span>✓ Attendance</span><span>✓ Daily Tasks</span><span>✓ Performance Reports</span>
+      </div>
+    </div>
+    <div class="login-card">
+      <div class="welcome">Welcome back</div>
+      <h2>Sign in to your account</h2>
+      <p class="muted">Enter your credentials to access the dashboard.</p>
+      <form id="loginForm">
+        <label>Email</label>
+        <div class="input-wrap"><span>◉</span><input id="loginEmail" type="email" placeholder="Enter your email" required></div>
+        <label>Password</label>
+        <div class="input-wrap"><span>●</span><input id="loginPassword" type="password" placeholder="Enter password" required></div>
+        <button class="login-btn" id="loginBtn">Sign In <span>→</span></button>
+      </form>
+      <div id="loginMsg"></div>
+      <div class="auth-switch"><a onclick="showAuth('forgot')">Forgot password?</a></div>
+      <div class="auth-switch">New team member? <a onclick="showAuth('signup')">Create an account</a></div>
+    </div>
   </div>
 </div>
 
+<!-- ============ SIGN UP PAGE ============ -->
+<div id="signupPage" class="login-wrap hidden">
+  <div class="login-shell">
+    <div class="login-brand">
+      <img class="brand-logo" src="assets/logo.jpeg" alt="MYA E-Commerce">
+      <h1>Join MYA Partner Portal</h1>
+      <p>Create your account to get started</p>
+      <div class="login-features">
+        <span>✓ Track Your Tasks</span><span>✓ View Attendance</span><span>✓ Team Access</span><span>✓ Performance Reports</span>
+      </div>
+    </div>
+    <div class="login-card">
+      <div class="welcome">Get Started</div>
+      <h2>Create your account</h2>
+      <p class="muted">The very first account created automatically becomes the Owner. Everyone after that signs up as a Worker and is approved by the Owner/Manager.</p>
+      <form id="signupForm">
+        <label>Full Name</label>
+        <div class="input-wrap"><span>◉</span><input id="signupName" placeholder="Enter your full name" required></div>
+        <label>Email</label>
+        <div class="input-wrap"><span>✉</span><input id="signupEmail" type="email" placeholder="Enter your email" required></div>
+        <label>Password</label>
+        <div class="input-wrap"><span>●</span><input id="signupPassword" type="password" placeholder="Minimum 6 characters" minlength="6" required></div>
+        <button class="login-btn" id="signupBtn">Create Account <span>→</span></button>
+      </form>
+      <div id="signupMsg"></div>
+      <div class="auth-switch">Already have an account? <a onclick="showAuth('login')">Sign in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FORGOT PASSWORD PAGE ============ -->
+<div id="forgotPage" class="login-wrap hidden">
+  <div class="login-shell">
+    <div class="login-brand">
+      <img class="brand-logo" src="assets/logo.jpeg" alt="MYA E-Commerce">
+      <h1>Reset Your Password</h1>
+      <p>We'll email you a secure reset link</p>
+    </div>
+    <div class="login-card">
+      <div class="welcome">Password Reset</div>
+      <h2>Forgot your password?</h2>
+      <p class="muted">Enter the email linked to your account and we'll send a password reset link.</p>
+      <form id="forgotForm">
+        <label>Email</label>
+        <div class="input-wrap"><span>✉</span><input id="forgotEmail" type="email" placeholder="Enter your email" required></div>
+        <button class="login-btn" id="forgotBtn">Send Reset Link <span>→</span></button>
+      </form>
+      <div id="forgotMsg"></div>
+      <div class="auth-switch"><a onclick="showAuth('login')">← Back to Sign in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SET NEW PASSWORD PAGE (from email link) ============ -->
+<div id="resetPage" class="login-wrap hidden">
+  <div class="login-shell">
+    <div class="login-brand">
+      <img class="brand-logo" src="assets/logo.jpeg" alt="MYA E-Commerce">
+      <h1>Set a New Password</h1>
+      <p>Choose a new password for your account</p>
+    </div>
+    <div class="login-card">
+      <div class="welcome">Almost done</div>
+      <h2>Create new password</h2>
+      <p class="muted">This link was opened from your password reset email.</p>
+      <form id="resetForm">
+        <label>New Password</label>
+        <div class="input-wrap"><span>●</span><input id="resetPassword" type="password" placeholder="Minimum 6 characters" minlength="6" required></div>
+        <button class="login-btn" id="resetBtn">Update Password <span>→</span></button>
+      </form>
+      <div id="resetMsg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PENDING APPROVAL PAGE ============ -->
+<div id="pendingPage" class="login-wrap hidden">
+  <div class="login-shell" style="grid-template-columns:1fr">
+    <div class="login-card">
+      <div class="pending-box">
+        <div class="badge-icon">⏳</div>
+        <img class="brand-logo" src="assets/logo.jpeg" alt="MYA E-Commerce" style="margin-bottom:16px">
+        <h2>Account Pending Approval</h2>
+        <p class="muted">Your account has been created successfully but is waiting for approval from the Owner or a Manager. You'll be able to sign in as soon as your account is activated.</p>
+        <button class="secondary" id="pendingLogout" style="margin-top:10px">Sign Out</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MAIN APP ============ -->
 <div id="app" class="app hidden">
-  <aside>
-    <div class="brand"><span>MYA</span><b>E-Commerce Partner</b></div>
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-mark-img" src="assets/logo.jpeg" alt="MYA">
+      <div><strong>MYA</strong><span>E-Commerce Partner</span></div>
+    </div>
+    <div class="user-mini">
+      <div class="avatar" id="sideAvatar">MY</div>
+      <div><b id="sideName">—</b><span id="sideRole">—</span></div>
+    </div>
+    <div class="menu-label">MAIN MENU</div>
     <nav>
-      <button class="nav active" data-section="dashboard">🏠 Dashboard</button>
-      <button class="nav" data-section="workers">👥 Workers</button>
-      <button class="nav" data-section="attendance">📅 Attendance</button>
-      <button class="nav" data-section="tasks">📝 Daily Tasks</button>
-      <button class="nav" data-section="reports">📊 Reports</button>
+      <button class="nav active" data-section="dashboard"><i>⌂</i> Dashboard</button>
+      <button class="nav" data-section="workers"><i>♙</i> Workers</button>
+      <button class="nav" data-section="attendance"><i>✓</i> Attendance</button>
+      <button class="nav" data-section="tasks"><i>▣</i> Daily Tasks</button>
+      <button class="nav" data-section="reports"><i>▥</i> Reports</button>
+      <button class="nav owner-only" data-section="access"><i>♙</i> Team Access</button>
     </nav>
-    <button id="logout" class="logout">🚪 Logout</button>
+    <div class="menu-label">SYSTEM</div>
+    <nav>
+      <button class="nav" data-section="settings"><i>⚙</i> Settings</button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="help-box"><b>Need help?</b><span>Manage your team from one place.</span></div>
+      <button id="logout" class="logout"><i>↪</i> Logout</button>
+    </div>
   </aside>
 
-  <main>
-    <header><div><h2 id="pageTitle">Dashboard</h2><p>Owner Control Panel</p></div><span class="date" id="today"></span></header>
-
-    <section id="dashboard" class="section">
-      <div class="cards">
-        <div class="card"><span>Total Workers</span><strong id="totalWorkers">0</strong></div>
-        <div class="card"><span>Present Today</span><strong id="presentToday">0</strong></div>
-        <div class="card"><span>Absent Today</span><strong id="absentToday">0</strong></div>
-        <div class="card"><span>Tasks Today</span><strong id="tasksToday">0</strong></div>
-        <div class="card"><span>Completed</span><strong id="completedToday">0</strong></div>
-        <div class="card"><span>In Progress</span><strong id="progressToday">0</strong></div>
+  <main class="main">
+    <header class="topbar">
+      <div class="mobile-brand"><img class="brand-mark-img" src="assets/logo.jpeg" alt="MYA"><b>MYA Partner</b></div>
+      <div class="search"><span>⌕</span><input id="globalSearch" placeholder="Search workers, tasks..."></div>
+      <div class="top-actions">
+        <button class="icon-btn">⌕</button><button class="icon-btn">◔<em>3</em></button>
+        <div class="profile"><div class="avatar" id="topAvatar">MY</div><div><b id="topName">—</b><span id="topRole">—</span></div><span>⌄</span></div>
       </div>
-      <div class="panel"><h3>Today's Task Overview</h3><div id="dashboardTasks"></div></div>
-    </section>
+    </header>
 
-    <section id="workers" class="section hidden">
-      <div class="toolbar"><h3>Worker Management</h3><button class="primary" onclick="openWorkerModal()">+ Add Worker</button></div>
-      <div class="panel"><table><thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Role</th><th>Joining Date</th><th>Status</th><th>Action</th></tr></thead><tbody id="workerTable"></tbody></table></div>
-    </section>
-
-    <section id="attendance" class="section hidden">
-      <div class="toolbar"><h3>Daily Attendance</h3><input id="attendanceDate" type="date"></div>
-      <div class="panel"><table><thead><tr><th>Worker</th><th>Attendance</th><th>Time</th><th>Action</th></tr></thead><tbody id="attendanceTable"></tbody></table></div>
-    </section>
-
-    <section id="tasks" class="section hidden">
-      <div class="toolbar"><h3>Daily Tasks</h3><button class="primary" onclick="openTaskModal()">+ Assign Task</button></div>
-      <div class="panel"><table><thead><tr><th>Task</th><th>Worker</th><th>Deadline</th><th>Priority</th><th>Progress</th><th>Status</th><th>Action</th></tr></thead><tbody id="taskTable"></tbody></table></div>
-    </section>
-
-    <section id="reports" class="section hidden">
-      <div class="cards">
-        <div class="card"><span>All Tasks</span><strong id="allTasks">0</strong></div>
-        <div class="card"><span>Completed Tasks</span><strong id="allCompleted">0</strong></div>
-        <div class="card"><span>Average Progress</span><strong id="avgProgress">0%</strong></div>
+    <div class="content">
+      <div class="page-head">
+        <div><h2 id="pageTitle">Dashboard</h2><p id="pageSubtitle">Welcome back! Here's what's happening with your team today.</p></div>
+        <div class="date-chip">▣ <span id="today"></span></div>
       </div>
-      <div class="panel"><h3>Worker Performance</h3><table><thead><tr><th>Worker</th><th>Tasks</th><th>Completed</th><th>Average Progress</th></tr></thead><tbody id="reportTable"></tbody></table></div>
-    </section>
+
+      <section id="dashboard" class="section">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-icon blue">♙</div><span>Total Workers</span><strong id="totalWorkers">0</strong><small>Active workforce</small></div>
+          <div class="stat-card"><div class="stat-icon green">✓</div><span>Present Today</span><strong id="presentToday">0</strong><small class="positive">On duty today</small></div>
+          <div class="stat-card"><div class="stat-icon red">×</div><span>Absent Today</span><strong id="absentToday">0</strong><small>Need attention</small></div>
+          <div class="stat-card"><div class="stat-icon purple">▣</div><span>Tasks Today</span><strong id="tasksToday">0</strong><small>Scheduled today</small></div>
+        </div>
+        <div class="dashboard-grid">
+          <div class="panel chart-panel">
+            <div class="panel-head"><div><h3>Task Overview</h3><p>Today's task progress</p></div><select id="taskFilter"><option>Today</option><option>All Tasks</option></select></div>
+            <div class="donut-row">
+              <div class="donut" id="donutEl"><div><b id="taskPercent">0%</b><span>Completed</span></div></div>
+              <div class="legend"><div><span class="dot green-dot"></span>Completed <b id="completedToday">0</b></div><div><span class="dot blue-dot"></span>In Progress <b id="progressToday">0</b></div><div><span class="dot gray-dot"></span>Pending <b id="pendingToday">0</b></div></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div><h3>Today's Task Overview</h3><p>Latest assigned work</p></div><button class="link-btn" onclick="showSection('tasks')">View all →</button></div>
+            <div id="dashboardTasks" class="task-list"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div><h3>Team Snapshot</h3><p>Current workers and roles</p></div><button class="link-btn" onclick="showSection('workers')">Manage workers →</button></div>
+          <div class="mini-workers" id="miniWorkers"></div>
+        </div>
+      </section>
+
+      <section id="workers" class="section hidden">
+        <div class="toolbar"><div><h3>Worker Management</h3><p>Manage your employees and their profiles.</p></div><button class="primary owner-manager-only" onclick="openWorkerModal()">+ Add Worker</button></div>
+        <div class="panel"><div class="table-tools"><div class="table-search">⌕ <input id="workerSearch" placeholder="Search worker..."></div><span class="table-count" id="workerCount"></span></div>
+        <div class="table-wrap"><table><thead><tr><th>WORKER</th><th>PHONE</th><th>ROLE / DEPARTMENT</th><th>JOINING DATE</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody id="workerTable"></tbody></table></div></div>
+      </section>
+
+      <section id="attendance" class="section hidden">
+        <div class="toolbar"><div><h3>Daily Attendance</h3><p>Track attendance and working time.</p></div><input id="attendanceDate" class="date-input" type="date"></div>
+        <div class="attendance-summary"><div><b id="attPresent">0</b><span>Present</span></div><div><b id="attLate">0</b><span>Late</span></div><div><b id="attAbsent">0</b><span>Absent</span></div><div><b id="attLeave">0</b><span>Leave</span></div></div>
+        <div class="panel"><div class="table-wrap"><table><thead><tr><th>WORKER</th><th>ATTENDANCE</th><th>CHECK-IN</th><th>MARK STATUS</th></tr></thead><tbody id="attendanceTable"></tbody></table></div></div>
+      </section>
+
+      <section id="tasks" class="section hidden">
+        <div class="toolbar"><div><h3>Daily Tasks</h3><p>Assign, monitor and update employee tasks.</p></div><button class="primary owner-manager-only" onclick="openTaskModal()">+ Assign Task</button></div>
+        <div class="task-summary"><div><span>All Tasks</span><b id="taskTotal">0</b></div><div><span>Completed</span><b id="taskDone">0</b></div><div><span>In Progress</span><b id="taskDoing">0</b></div><div><span>Pending</span><b id="taskPending">0</b></div></div>
+        <div class="panel"><div class="table-tools"><div class="table-search">⌕ <input id="taskSearch" placeholder="Search task..."></div></div>
+        <div class="table-wrap"><table><thead><tr><th>TASK</th><th>WORKER</th><th>DEADLINE</th><th>PRIORITY</th><th>PROGRESS</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody id="taskTable"></tbody></table></div></div>
+      </section>
+
+      <section id="reports" class="section hidden">
+        <div class="toolbar"><div><h3>Reports & Performance</h3><p>Team productivity at a glance.</p></div></div>
+        <div class="stats-grid three"><div class="stat-card"><span>All Tasks</span><strong id="allTasks">0</strong><small>Total assigned</small></div><div class="stat-card"><span>Completed Tasks</span><strong id="allCompleted">0</strong><small>Successfully finished</small></div><div class="stat-card"><span>Average Progress</span><strong id="avgProgress">0%</strong><small>Across all tasks</small></div></div>
+        <div class="panel"><div class="panel-head"><div><h3>Worker Performance</h3><p>Task completion by employee</p></div></div><div class="table-wrap"><table><thead><tr><th>WORKER</th><th>TASKS</th><th>COMPLETED</th><th>AVG. PROGRESS</th><th>PERFORMANCE</th></tr></thead><tbody id="reportTable"></tbody></table></div></div>
+      </section>
+
+      <section id="access" class="section hidden owner-only-section">
+        <div class="toolbar"><div><h3>Team Access</h3><p>Approve new sign-ups and manage roles. New members create their own login on the Sign Up page — you approve and assign their role here.</p></div></div>
+        <div class="panel"><div class="table-wrap"><table><thead><tr><th>NAME</th><th>EMAIL</th><th>ROLE</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody id="accountTable"></tbody></table></div></div>
+      </section>
+
+      <section id="settings" class="section hidden">
+        <div class="toolbar"><div><h3>Settings</h3><p>Basic portal preferences.</p></div></div>
+        <div class="panel settings-panel">
+          <div class="setting-row"><div><b>Portal Name</b><span>Displayed across the dashboard.</span></div><input value="MYA E-Commerce Partner" disabled></div>
+          <div class="setting-row"><div><b>Your Role</b><span>Current access level.</span></div><input id="settingsRole" value="" disabled></div>
+          <div class="setting-row"><div><b>Change Password</b><span>Send yourself a password reset email.</span></div><button class="secondary" onclick="sendMyResetEmail()">Send Reset Email</button></div>
+        </div>
+      </section>
+    </div>
+    <footer>© 2026 MYA E-Commerce Partner. All rights reserved.</footer>
   </main>
 </div>
 
