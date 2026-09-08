@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>MYA E-Commerce Partner — HR Management</title>
+  <meta name="description" content="MYA E-Commerce Partner worker, attendance and task management system.">
+  <link rel="icon" href="logo.jpeg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+
+  <section id="authView" class="auth-view">
+    <div class="auth-card">
+      <img src="logo.jpeg" class="auth-logo" alt="MYA E-Commerce Partner">
+      <div class="brand-title">MYA E-Commerce Partner</div>
+      <p class="muted">Secure HR & Worker Management System</p>
+      <form id="loginForm">
+        <label>Email</label>
+        <input id="loginEmail" type="email" placeholder="owner@example.com" required autocomplete="username">
+        <label>Password</label>
+        <input id="loginPassword" type="password" placeholder="••••••••" required autocomplete="current-password">
+        <button class="btn primary full" type="submit">Sign in</button>
+      </form>
+      <div id="configNotice" class="notice hidden"></div>
+    </div>
+  </section>
+
+  <section id="appView" class="app-shell hidden">
+    <aside class="sidebar" id="sidebar">
+      <div class="side-brand">
+        <img src="logo.jpeg" alt="MYA">
+        <div><strong>MYA</strong><span>E-Commerce Partner</span></div>
+      </div>
+      <nav>
+        <button class="nav-item active" data-page="dashboard"><span>⌂</span> Dashboard</button>
+        <button class="nav-item" data-page="workers"><span>♙</span> Workers</button>
+        <button class="nav-item" data-page="attendance"><span>✓</span> Attendance</button>
+        <button class="nav-item" data-page="tasks"><span>▣</span> Daily Tasks</button>
+        <button class="nav-item" data-page="reports"><span>◫</span> Reports</button>
+        <button class="nav-item" data-page="settings"><span>⚙</span> Settings</button>
+      </nav>
+      <div class="side-bottom">
+        <div class="user-mini"><div class="avatar" id="sideAvatar">O</div><div><b id="sideName">Owner</b><small id="sideRole">OWNER</small></div></div>
+        <button id="logoutBtn" class="logout">↪ Logout</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button id="menuBtn" class="icon-btn mobile-only">☰</button>
+        <div>
+          <div class="eyebrow">MYA E-COMMERCE PARTNER</div>
+          <h1 id="pageTitle">Dashboard</h1>
+        </div>
+        <div class="top-actions">
+          <div class="today" id="todayText"></div>
+          <div class="avatar" id="topAvatar">O</div>
+        </div>
+      </header>
+
+      <div id="setupBanner" class="setup-banner hidden"></div>
+
+      <section id="page-dashboard" class="page">
+        <div class="welcome">
+          <div><span class="eyebrow">GOOD TO SEE YOU</span><h2 id="welcomeText">Welcome back</h2><p class="muted">Here is your team's latest overview.</p></div>
+          <button class="btn primary" data-page-jump="tasks">+ Assign Task</button>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-icon">♙</div><div><span>Total Workers</span><strong id="statWorkers">0</strong></div></div>
+          <div class="stat-card"><div class="stat-icon">✓</div><div><span>Present Today</span><strong id="statPresent">0</strong></div></div>
+          <div class="stat-card"><div class="stat-icon">▣</div><div><span>Tasks Today</span><strong id="statTasks">0</strong></div></div>
+          <div class="stat-card"><div class="stat-icon">★</div><div><span>Completed</span><strong id="statCompleted">0</strong></div></div>
+        </div>
+        <div class="grid-2">
+          <div class="panel"><div class="panel-head"><h3>Today's Attendance</h3><button class="text-btn" data-page-jump="attendance">View all</button></div><div id="dashboardAttendance" class="list"></div></div>
+          <div class="panel"><div class="panel-head"><h3>Recent Tasks</h3><button class="text-btn" data-page-jump="tasks">View all</button></div><div id="dashboardTasks" class="list"></div></div>
+        </div>
+      </section>
+
+      <section id="page-workers" class="page hidden">
+        <div class="page-head"><div><h2>Workers</h2><p class="muted">Manage your team and access roles.</p></div><button id="addWorkerBtn" class="btn primary">+ Add Worker</button></div>
+        <div class="toolbar"><input id="workerSearch" placeholder="Search by name, ID or department…"><select id="workerStatusFilter"><option value="">All statuses</option><option>Active</option><option>Inactive</option></select></div>
+        <div class="table-wrap"><table><thead><tr><th>Worker</th><th>Employee ID</th><th>Department</th><th>Phone</th><th>Status</th><th>Role</th><th></th></tr></thead><tbody id="workersTable"></tbody></table></div>
+      </section>
+
+      <section id="page-attendance" class="page hidden">
+        <div class="page-head"><div><h2>Attendance</h2><p class="muted">Track daily attendance.</p></div><button id="markAttendanceBtn" class="btn primary">+ Mark Attendance</button></div>
+        <div class="toolbar"><input id="attendanceDate" type="date"><select id="attendanceWorkerFilter"><option value="">All workers</option></select></div>
+        <div class="table-wrap"><table><thead><tr><th>Worker</th><th>Date</th><th>Status</th><th>Time</th><th>Notes</th><th></th></tr></thead><tbody id="attendanceTable"></tbody></table></div>
+      </section>
+
+      <section id="page-tasks" class="page hidden">
+        <div class="page-head"><div><h2>Daily Tasks</h2><p class="muted">Assign, monitor and close tasks.</p></div><button id="addTaskBtn" class="btn primary">+ Assign Task</button></div>
+        <div class="toolbar"><input id="taskSearch" placeholder="Search tasks…"><select id="taskStatusFilter"><option value="">All statuses</option><option>Pending</option><option>In Progress</option><option>Completed</option></select></div>
+        <div id="taskCards" class="task-grid"></div>
+      </section>
+
+      <section id="page-reports" class="page hidden">
+        <div class="page-head"><div><h2>Reports</h2><p class="muted">Quick performance and attendance summary.</p></div><button id="exportBtn" class="btn secondary">Export JSON</button></div>
+        <div class="stats-grid"><div class="stat-card"><div><span>Attendance Records</span><strong id="reportAttendance">0</strong></div></div><div class="stat-card"><div><span>All Tasks</span><strong id="reportTasks">0</strong></div></div><div class="stat-card"><div><span>Completion Rate</span><strong id="reportRate">0%</strong></div></div><div class="stat-card"><div><span>Active Workers</span><strong id="reportActive">0</strong></div></div></div>
+        <div class="panel"><div class="panel-head"><h3>Worker Performance</h3></div><div class="table-wrap"><table><thead><tr><th>Worker</th><th>Tasks</th><th>Completed</th><th>Progress</th><th>Attendance</th></tr></thead><tbody id="performanceTable"></tbody></table></div></div>
+      </section>
+
+      <section id="page-settings" class="page hidden">
+        <div class="page-head"><div><h2>Settings</h2><p class="muted">Account and connection information.</p></div></div>
+        <div class="grid-2">
+          <div class="panel"><h3>Your Account</h3><div class="profile-box"><div class="big-avatar" id="settingsAvatar">O</div><div><h3 id="settingsName">—</h3><p id="settingsEmail" class="muted">—</p><span id="settingsRole" class="badge blue">—</span></div></div></div>
+          <div class="panel"><h3>Supabase Connection</h3><p class="muted">This project uses the Supabase browser client. Only the public anon key belongs here. Never put a service-role key in this website.</p><div id="connectionStatus" class="status-line"></div></div>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <div id="modalRoot"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
