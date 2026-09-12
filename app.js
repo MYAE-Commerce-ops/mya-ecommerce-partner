@@ -93,7 +93,7 @@ function renderAttendance(){
 function renderTasks(){
   const q=($("taskSearch").value||"").toLowerCase(), f=$("taskStatusFilter").value;
   const rows=visibleTasks().filter(t=>(!q||`${t.title} ${t.description}`.toLowerCase().includes(q))&&(!f||t.status===f));
-  $("taskCards").innerHTML=rows.map(t=>`<article class="task-card"><div style="display:flex;justify-content:space-between;gap:8px">${badgeStatus(t.status)}<span class="muted" style="font-size:11px">${fmtDate(t.due_date)}</span></div><h3>${esc(t.title)}</h3><div class="task-meta"><span>👤 ${esc(worker(t.assigned_to)?.full_name||"Unassigned")}</span><span>Priority: ${esc(t.priority||"Normal")}</span></div><p class="muted" style="font-size:12px">${esc(t.description||"No description")}</p><div class="progress"><i style="width:${Math.min(100,Math.max(0,t.progress||0))}%"></i></div><div class="task-footer"><b>${t.progress||0}%</b><div class="actions">${canManage()?`<button class="mini-btn" onclick="editTask('${t.id}')">Edit</button><button class="mini-btn" onclick="deleteTask('${t.id}')">Delete</button>`:""}</div></div></article>`).join("")||`<div class="empty">No tasks found.</div>`;
+  $("taskCards").innerHTML=rows.map(t=>`<article class="task-card"><div style="display:flex;justify-content:space-between;gap:8px">${badgeStatus(t.status)}<span class="muted" style="font-size:11px">${fmtDate(t.due_date)}</span></div><h3>${esc(t.title)}</h3><div class="task-meta"><span>👤 ${esc(worker(t.assigned_to)?.full_name||"Unassigned")}</span><span>Priority: ${esc(t.priority||"Normal")}</span></div><p class="muted" style="font-size:12px">${esc(t.description||"No description")}</p><div class="progress"><i style="width:${Math.min(100,Math.max(0,t.progress||0))}%"></i></div>${t.completion_note?`<p class="muted" style="font-size:11px;margin-top:-4px">📝 ${esc(t.completion_note)}</p>`:""}<div class="task-footer"><b>${t.progress||0}%</b><div class="actions">${t.assigned_to===currentUser?.id?`<button class="mini-btn" onclick="openWorkerTaskModal('${t.id}')">Update Status</button>`:""}${canManage()?`<button class="mini-btn" onclick="editTask('${t.id}')">Edit</button><button class="mini-btn" onclick="deleteTask('${t.id}')">Delete</button>`:""}</div></div></article>`).join("")||`<div class="empty">No tasks found.</div>`;
 }
 function renderReports(){
   const va=visibleAttendance(), vt=visibleTasks();
@@ -136,6 +136,59 @@ function openTaskModal(t={}){if(!canManage())return;modal(t.id?"Edit Task":"Assi
 function editTask(id){const t=tasks.find(x=>x.id===id);if(t)openTaskModal(t)}
 async function deleteTask(id){if(!confirm("Delete this task?"))return;try{const {error}=await client.from("tasks").delete().eq("id",id);if(error)throw error;await loadData();renderTasks();toast("Task deleted")}catch(e){toast(e.message,"error")}}
 
+function workerTaskForm(t={}){
+ return `<form id="workerTaskForm"><div class="form-grid"><div class="field full"><label>Status</label><select name="status" id="wtStatus">${["Pending","In Progress","Completed"].map(x=>`<option ${t.status===x?"selected":""}>${x}</option>`).join("")}</select></div><div class="field full"><label>Progress %</label><input name="progress" type="number" min="0" max="100" value="${t.progress??0}"></div><div class="field full"><label>Reason / note (what did you do?)</label><textarea name="completion_note" placeholder="e.g. 50 products upload kar diye">${esc(t.completion_note||"")}</textarea></div></div><div class="modal-actions"><button type="button" class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn primary">Save Update</button></div></form>`;
+}
+function openWorkerTaskModal(id){
+ const t=tasks.find(x=>x.id===id); if(!t||t.assigned_to!==currentUser?.id)return;
+ modal("Update Task",workerTaskForm(t));
+ $("workerTaskForm").onsubmit=async e=>{
+  e.preventDefault();
+  const data=Object.fromEntries(new FormData(e.target).entries());
+  data.progress=Math.max(0,Math.min(100,Number(data.progress||0)));
+  if(data.status==="Completed")data.progress=100;
+  try{
+   const {error}=await client.from("tasks").update({status:data.status,progress:data.progress,completion_note:data.completion_note}).eq("id",id);
+   if(error)throw error;
+   closeModal();await loadData();renderPage("tasks");toast("Task updated")
+  }catch(err){toast(err.message,"error")}
+ }
+}
+
+function forgotEmailForm(){
+ return `<form id="forgotEmailForm"><div class="form-grid"><div class="field full"><label>Your account email</label><input name="email" type="email" required placeholder="you@example.com" autocomplete="username"></div></div><p class="muted" style="font-size:12px">We will email you a 6-digit code to reset your password.</p><div class="modal-actions"><button type="button" class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn primary">Send Code</button></div></form>`;
+}
+function resetPasswordForm(email){
+ return `<form id="resetPasswordForm"><div class="form-grid"><div class="field full"><label>Email</label><input value="${esc(email)}" disabled></div><div class="field full"><label>6-digit code (check your email)</label><input name="token" required maxlength="6" placeholder="123456" autocomplete="one-time-code"></div><div class="field full"><label>New password</label><input name="password" type="password" minlength="8" required placeholder="Minimum 8 characters" autocomplete="new-password"></div><div class="field full"><label>Confirm new password</label><input name="confirm" type="password" minlength="8" required autocomplete="new-password"></div></div><div class="modal-actions"><button type="button" class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn primary">Reset Password</button></div></form>`;
+}
+function openForgotPasswordModal(){
+ if(!client){toast("Configure Supabase in app.js first","error");return}
+ modal("Forgot Password",forgotEmailForm());
+ $("forgotEmailForm").onsubmit=async e=>{
+  e.preventDefault();
+  const email=(new FormData(e.target).get("email")||"").trim();
+  try{
+   const {error}=await client.auth.resetPasswordForEmail(email);
+   if(error)throw error;
+   toast("Code sent to your email");
+   modal("Reset Password",resetPasswordForm(email));
+   $("resetPasswordForm").onsubmit=async e2=>{
+    e2.preventDefault();
+    const d=Object.fromEntries(new FormData(e2.target).entries());
+    if(d.password!==d.confirm){toast("Passwords do not match","error");return}
+    try{
+     const {error:vErr}=await client.auth.verifyOtp({email,token:d.token.trim(),type:"recovery"});
+     if(vErr)throw vErr;
+     const {error:uErr}=await client.auth.updateUser({password:d.password});
+     if(uErr)throw uErr;
+     closeModal();
+     toast("Password reset successfully!");
+    }catch(err){toast(err.message||"Could not reset password","error")}
+   }
+  }catch(err){toast(err.message||"Could not send code","error")}
+ }
+}
+
 async function boot(){
   if(!isConfigured){$("configNotice").classList.remove("hidden");$("configNotice").textContent="Supabase is not configured yet. Add SUPABASE_URL and SUPABASE_ANON_KEY in app.js, then reload.";return}
   const {data:{session}}=await client.auth.getSession();
@@ -145,6 +198,7 @@ async function boot(){
 async function enterApp(){await loadProfile();await loadData();updateIdentity();$("authView").classList.add("hidden");$("appView").classList.remove("hidden");setPage("dashboard");if(!canManage()){$("setupBanner").classList.remove("hidden");$("setupBanner").textContent="Worker mode: you can view only your own attendance and assigned tasks."}}
 $("loginForm").addEventListener("submit",async e=>{e.preventDefault();if(!client){toast("Configure Supabase in app.js first","error");return}try{const {error}=await client.auth.signInWithPassword({email:$("loginEmail").value.trim(),password:$("loginPassword").value});if(error)throw error}catch(err){toast(err.message||"Login failed","error")}})
 $("logoutBtn").onclick=async()=>{await client.auth.signOut()}
+$("forgotPasswordBtn").onclick=openForgotPasswordModal;
 $("menuBtn").onclick=()=>$("sidebar").classList.toggle("open");
 document.querySelectorAll(".nav-item").forEach(b=>b.onclick=()=>setPage(b.dataset.page));
 document.querySelectorAll("[data-page-jump]").forEach(b=>b.onclick=()=>setPage(b.dataset.pageJump));

@@ -41,9 +41,14 @@ create table if not exists public.tasks (
   priority text not null default 'Normal' check (priority in ('Low','Normal','High','Urgent')),
   status text not null default 'Pending' check (status in ('Pending','In Progress','Completed')),
   progress integer not null default 0 check (progress between 0 and 100),
+  completion_note text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- If the tasks table already existed before this update, run this line once
+-- so the existing table also gets the new column (safe to re-run, does nothing if it already exists):
+alter table public.tasks add column if not exists completion_note text;
 
 create or replace function public.is_manager_or_owner()
 returns boolean
