@@ -156,10 +156,10 @@ function openWorkerTaskModal(id){
 }
 
 function forgotEmailForm(){
- return `<form id="forgotEmailForm"><div class="form-grid"><div class="field full"><label>Your account email</label><input name="email" type="email" required placeholder="you@example.com" autocomplete="username"></div></div><p class="muted" style="font-size:12px">We will email you a 6-digit code to reset your password.</p><div class="modal-actions"><button type="button" class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn primary">Send Code</button></div></form>`;
+ return `<form id="forgotEmailForm"><div class="form-grid"><div class="field full"><label>Your account email</label><input name="email" type="email" required placeholder="you@example.com" autocomplete="username"></div></div><p class="muted" style="font-size:12px">We will email you a password reset link. Open it on this device to set a new password.</p><div class="modal-actions"><button type="button" class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn primary">Send Reset Link</button></div></form>`;
 }
-function resetPasswordForm(email){
- return `<form id="resetPasswordForm"><div class="form-grid"><div class="field full"><label>Email</label><input value="${esc(email)}" disabled></div><div class="field full"><label>6-digit code (check your email)</label><input name="token" required maxlength="6" placeholder="123456" autocomplete="one-time-code"></div><div class="field full"><label>New password</label><input name="password" type="password" minlength="8" required placeholder="Minimum 8 characters" autocomplete="new-password"></div><div class="field full"><label>Confirm new password</label><input name="confirm" type="password" minlength="8" required autocomplete="new-password"></div></div><div class="modal-actions"><button type="button" class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn primary">Reset Password</button></div></form>`;
+function newPasswordForm(){
+ return `<form id="newPasswordForm"><div class="form-grid"><div class="field full"><label>New password</label><input name="password" type="password" minlength="8" required placeholder="Minimum 8 characters" autocomplete="new-password"></div><div class="field full"><label>Confirm new password</label><input name="confirm" type="password" minlength="8" required autocomplete="new-password"></div></div><div class="modal-actions"><button class="btn primary full">Set New Password</button></div></form>`;
 }
 function openForgotPasswordModal(){
  if(!client){toast("Configure Supabase in app.js first","error");return}
@@ -168,24 +168,25 @@ function openForgotPasswordModal(){
   e.preventDefault();
   const email=(new FormData(e.target).get("email")||"").trim();
   try{
-   const {error}=await client.auth.resetPasswordForEmail(email);
+   const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});
    if(error)throw error;
-   toast("Code sent to your email");
-   modal("Reset Password",resetPasswordForm(email));
-   $("resetPasswordForm").onsubmit=async e2=>{
-    e2.preventDefault();
-    const d=Object.fromEntries(new FormData(e2.target).entries());
-    if(d.password!==d.confirm){toast("Passwords do not match","error");return}
-    try{
-     const {error:vErr}=await client.auth.verifyOtp({email,token:d.token.trim(),type:"recovery"});
-     if(vErr)throw vErr;
-     const {error:uErr}=await client.auth.updateUser({password:d.password});
-     if(uErr)throw uErr;
-     closeModal();
-     toast("Password reset successfully!");
-    }catch(err){toast(err.message||"Could not reset password","error")}
-   }
-  }catch(err){toast(err.message||"Could not send code","error")}
+   closeModal();
+   toast("Reset link sent — check your email (and spam folder)");
+  }catch(err){toast(err.message||"Could not send reset link","error")}
+ }
+}
+function openSetNewPasswordModal(){
+ modal("Set New Password",newPasswordForm());
+ $("newPasswordForm").onsubmit=async e=>{
+  e.preventDefault();
+  const d=Object.fromEntries(new FormData(e.target).entries());
+  if(d.password!==d.confirm){toast("Passwords do not match","error");return}
+  try{
+   const {error}=await client.auth.updateUser({password:d.password});
+   if(error)throw error;
+   closeModal();
+   toast("Password updated! You're logged in.");
+  }catch(err){toast(err.message||"Could not update password","error")}
  }
 }
 
@@ -193,7 +194,11 @@ async function boot(){
   if(!isConfigured){$("configNotice").classList.remove("hidden");$("configNotice").textContent="Supabase is not configured yet. Add SUPABASE_URL and SUPABASE_ANON_KEY in app.js, then reload.";return}
   const {data:{session}}=await client.auth.getSession();
   if(session){try{await enterApp()}catch(e){toast(e.message,"error")}}
-  client.auth.onAuthStateChange(async(_event,session)=>{if(session&&!currentUser){try{await enterApp()}catch(e){toast(e.message,"error")}}else if(!session){currentUser=null;currentProfile=null;$("appView").classList.add("hidden");$("authView").classList.remove("hidden")}})
+  client.auth.onAuthStateChange(async(event,session)=>{
+    if(event==="PASSWORD_RECOVERY"){openSetNewPasswordModal();return}
+    if(session&&!currentUser){try{await enterApp()}catch(e){toast(e.message,"error")}}
+    else if(!session){currentUser=null;currentProfile=null;$("appView").classList.add("hidden");$("authView").classList.remove("hidden")}
+  })
 }
 async function enterApp(){await loadProfile();await loadData();updateIdentity();$("authView").classList.add("hidden");$("appView").classList.remove("hidden");setPage("dashboard");if(!canManage()){$("setupBanner").classList.remove("hidden");$("setupBanner").textContent="Worker mode: you can view only your own attendance and assigned tasks."}}
 $("loginForm").addEventListener("submit",async e=>{e.preventDefault();if(!client){toast("Configure Supabase in app.js first","error");return}try{const {error}=await client.auth.signInWithPassword({email:$("loginEmail").value.trim(),password:$("loginPassword").value});if(error)throw error}catch(err){toast(err.message||"Login failed","error")}})
