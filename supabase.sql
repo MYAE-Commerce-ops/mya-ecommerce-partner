@@ -127,7 +127,7 @@ with check (
 );
 
 drop policy if exists "profiles_delete" on public.profiles;
-create policy "profiles_delete" on public.profiles for delete using (public.is_owner());
+create policy "profiles_delete" on public.profiles for delete using (public.is_manager_or_owner());
 
 drop policy if exists "attendance_select" on public.attendance;
 create policy "attendance_select" on public.attendance for select using (worker_id=auth.uid() or public.is_manager_or_owner());

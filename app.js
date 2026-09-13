@@ -83,7 +83,7 @@ function renderDashboard(){
 function renderWorkers(){
   const q=($("workerSearch").value||"").toLowerCase(), f=$("workerStatusFilter").value;
   const rows=workers.filter(w=>(!q||`${w.full_name} ${w.employee_id} ${w.department}`.toLowerCase().includes(q))&&(!f||w.status===f));
-  $("workersTable").innerHTML=rows.map(w=>`<tr><td><div class="worker-inline"><div class="avatar">${initials(w.full_name)}</div><div><b>${esc(w.full_name)}</b><small>${esc(w.email||"")}</small></div></div></td><td>${esc(w.employee_id||"—")}</td><td>${esc(w.department||"—")}</td><td>${esc(w.phone||"—")}</td><td>${badgeStatus(w.status)}</td><td>${badgeStatus((w.role||"worker").toUpperCase())}</td><td><div class="actions">${canManage()?`<button class="mini-btn" onclick="editWorker('${w.id}')">Edit</button>`:""}${isOwner()&&w.id!==currentUser.id?`<button class="mini-btn" onclick="toggleWorker('${w.id}', '${w.status}')">${w.status==="Active"?"Disable":"Enable"}</button>`:""}</div></td></tr>`).join("")||`<tr><td colspan="7"><div class="empty">No workers found.</div></td></tr>`;
+  $("workersTable").innerHTML=rows.map(w=>`<tr><td><div class="worker-inline"><div class="avatar">${initials(w.full_name)}</div><div><b>${esc(w.full_name)}</b><small>${esc(w.email||"")}</small></div></div></td><td>${esc(w.employee_id||"—")}</td><td>${esc(w.department||"—")}</td><td>${esc(w.phone||"—")}</td><td>${badgeStatus(w.status)}</td><td>${badgeStatus((w.role||"worker").toUpperCase())}</td><td><div class="actions">${canManage()?`<button class="mini-btn" onclick="editWorker('${w.id}')">Edit</button>`:""}${canManage()&&w.id!==currentUser.id?`<button class="mini-btn" onclick="toggleWorker('${w.id}', '${w.status}')">${w.status==="Active"?"Disable":"Enable"}</button>`:""}${canManage()&&w.id!==currentUser.id?`<button class="mini-btn" style="color:#b42318;border-color:#fda29b" onclick="deleteWorker('${w.id}','${esc(w.full_name)}')">Delete</button>`:""}</div></td></tr>`).join("")||`<tr><td colspan="7"><div class="empty">No workers found.</div></td></tr>`;
 }
 function renderAttendance(){
   const d=$("attendanceDate").value||today(), f=$("attendanceWorkerFilter").value;
@@ -121,6 +121,15 @@ function workerForm(w={}){
 function openWorkerModal(w={}){if(!canManage())return;modal(w.id?"Edit Worker":"Add Worker",workerForm(w));$("workerForm").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target), data=Object.fromEntries(fd.entries());try{if(w.id){delete data.email;delete data.password;const {error}=await client.from("profiles").update({...data,role:data.role}).eq("id",w.id);if(error)throw error;toast("Worker updated")}else{const {data:r,error}=await client.functions.invoke("create-user",{body:{email:data.email,password:data.password,full_name:data.full_name,employee_id:data.employee_id,phone:data.phone,joining_date:data.joining_date,department:data.department,role:data.role,status:data.status}});if(error)throw error;if(r?.error)throw new Error(r.error);toast("Worker account created")}closeModal();await loadData();renderPage(selectedPage)}catch(err){toast(err.message||"Could not save worker","error")}}}
 function editWorker(id){const w=worker(id);if(w)openWorkerModal(w)}
 async function toggleWorker(id,status){try{const {error}=await client.from("profiles").update({status:status==="Active"?"Inactive":"Active"}).eq("id",id);if(error)throw error;await loadData();renderWorkers();toast("Worker status updated")}catch(e){toast(e.message,"error")}}
+async function deleteWorker(id,name){
+  if(!confirm(`Permanently delete ${name}'s account? This removes their login and all their attendance/task records. This cannot be undone.`))return;
+  try{
+    const {data:r,error}=await client.functions.invoke("delete-user",{body:{user_id:id}});
+    if(error)throw error;
+    if(r?.error)throw new Error(r.error);
+    await loadData();renderWorkers();toast("Worker deleted")
+  }catch(e){toast(e.message||"Could not delete worker — is the delete-user Edge Function deployed?","error")}
+}
 
 function attendanceForm(a={}){
  const list=workers.filter(w=>w.status==="Active" || w.id===a.worker_id);
