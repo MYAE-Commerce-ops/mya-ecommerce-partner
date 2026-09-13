@@ -200,7 +200,7 @@ async function boot(){
     else if(!session){currentUser=null;currentProfile=null;$("appView").classList.add("hidden");$("authView").classList.remove("hidden")}
   })
 }
-async function enterApp(){await loadProfile();await loadData();updateIdentity();$("authView").classList.add("hidden");$("appView").classList.remove("hidden");setPage("dashboard");if(!canManage()){$("setupBanner").classList.remove("hidden");$("setupBanner").textContent="Worker mode: you can view only your own attendance and assigned tasks."}}
+async function enterApp(){await loadProfile();if(currentProfile&&currentProfile.status==="Inactive"){await client.auth.signOut();toast("Your account has been disabled. Contact your manager.","error");return}await loadData();updateIdentity();$("authView").classList.add("hidden");$("appView").classList.remove("hidden");setPage("dashboard");if(!canManage()){$("setupBanner").classList.remove("hidden");$("setupBanner").textContent="Worker mode: you can view only your own attendance and assigned tasks."}}
 $("loginForm").addEventListener("submit",async e=>{e.preventDefault();if(!client){toast("Configure Supabase in app.js first","error");return}try{const {error}=await client.auth.signInWithPassword({email:$("loginEmail").value.trim(),password:$("loginPassword").value});if(error)throw error}catch(err){toast(err.message||"Login failed","error")}})
 $("logoutBtn").onclick=async()=>{await client.auth.signOut()}
 $("forgotPasswordBtn").onclick=openForgotPasswordModal;
